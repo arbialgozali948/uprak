@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tebak-Tebakan</title>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f7e8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #e74c3c;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 0 #f9d5d1;
+        }
+        
+        .question-box {
+            background-color: #f1c40f;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .answer-box {
+            display: none;
+            background-color: #2ecc71;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            animation: fadeIn 0.5s;
+        }
+        
+        .wrong-answer {
+            background-color: #e74c3c;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .score {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .emoji {
+            font-size: 2em;
+            margin: 10px;
+        }
+        
+        .answer-input {
+            width: 80%;
+            padding: 12px;
+            font-size: 1em;
+            border: 2px solid #3498db;
+            border-radius: 25px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        
+        .answer-input:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+        }
+        
+        .attempts {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .hints {
+            color: #3498db;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .feedback {
+            font-weight: bold;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+        
+        .correct {
+            color: #2ecc71;
+        }
+        
+        .incorrect {
+            color: #e74c3c;
+        }
+        
+        .timer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #95a5a6;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+        
+        .logout-btn:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+    
+    <div class="container">
+        <h1>TEBAK-TEBAKAN</h1>
+        
+        <div class="emoji">🤔</div>
+        
+        <div class="timer" id="timer">Waktu: 60 detik</div>
+        
+        <div class="question-box" id="question">
+            Klik "Mulai" untuk memulai permainan!
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        
+        <div class="attempts" id="attempts"></div>
+        
+        <div class="hints" id="hints"></div>
+        
+        <input type="text" class="answer-input" id="userAnswer" placeholder="Ketik jawabanmu di sini..." disabled>
+        
+        <div class="controls">
+            <button id="startBtn">Mulai</button>
+            <button id="submitBtn" disabled>Submit Jawaban</button>
+            <button id="nextBtn" class="hidden">Pertanyaan Berikutnya</button>
+            <button id="hintBtn" class="hidden">Minta Hint</button>
+        </div>
+        
+        <div class="answer-box" id="answer"></div>
+        
+        <div class="score" id="score">
+            Skor: 0
+            <p>&copy; Arbi Algozali XI RPL.All Rights Reserved</p>
+        </div>
+    </div>
+
+    <script>
+        // Database pertanyaan dan jawaban ala Cak Lontong dengan hint
+        const questions = [
+            {
+                question: "Apa yang bunyinya 'ngik ngok' tapi bukan motor tua?",
+                answer: "kambing yang lagi flu",
+                hints: [
+                    "Ini adalah hewan.",
+                    "Suara ini disebabkan karena hewan ini sedang sakit.",
+                    "Hewan ini sering ada di peternakan."
+                ]
+            },
+            {
+                question: "Binatang apa yang paling kesepian?",
+                answer: "belalang kupu-kupu",
+                hints: [
+                    "Nama hewan ini terdiri dari dua kata.",
+                    "Kata-katanya adalah nama serangga yang berbeda.",
+                    "Kata kedua sering dikaitkan dengan sesuatu yang indah."
+                ]
+            },
+            {
+                question: "Apa yang naik turun tapi bukan tangga?",
+                answer: "harga cabe",
+                hints: [
+                    "Ini bukan benda fisik yang bergerak.",
+                    "Terkait dengan ekonomi atau pasar.",
+                    "Bisa ditemukan di dapur."
+                ]
+            },
+            {
+                question: "Apa yang lebih berat dari besi tapi bisa mengambang di air?",
+                answer: "kapal titanic",
+                hints: [
+                    "Ini adalah benda buatan manusia.",
+                    "Benda ini sangat besar dan terkenal.",
+                    "Pernah ada di film terkenal."
+                ]
+            },
+            {
+                question: "Apa yang punya sayap tapi bukan burung, bisa terbang tapi bukan pesawat?",
+                answer: "waktu",
+                hints: [
+                    "Ini bukan benda fisik.",
+                    "Sering dikaitkan dengan perjalanan hidup.",
+                    "Abstrak tapi sering disebut dalam percakapan."
+                ]
+            },
+            {
+                question: "Apa yang kalau dipukul malah senang?",
+                answer: "gong",
+                hints: [
+                    "Ini adalah alat musik.",
+                    "Biasanya terbuat dari logam.",
+                    "Sering digunakan dalam acara budaya."
+                ]
+            },
+            {
+                question: "Apa risoluzione yang bisa lari tapi tidak punya kaki?",
+                answer: "air",
+                hints: [
+                    "Ini adalah sesuatu yang ada di alam.",
+                    "Bisa bergerak cepat di tempat tertentu.",
+                    "Transparan dan penting untuk kehidupan."
+                ]
+            },
+            {
+                question: "Apa yang semakin diisi malah semakin ringan?",
+                answer: "balon",
+                hints: [
+                    "Ini adalah benda yang sering ada di pesta.",
+                    "Bisa terbang jika diisi dengan sesuatu.",
+                    "Biasanya berwarna-warni."
+                ]
+            },
+            {
+                question: "Apa yang kalau dibawa lari berat, tapi kalau ditinggal lari lebih berat?",
+                answer: "pasir",
+                hints: [
+                    "Ini adalah benda yang ada di alam.",
+                    "Sering ditemukan di pantai atau gurun.",
+                    "Berbutir kecil dan bisa dikumpulkan."
+                ]
+            },
+            {
+                question: "Apa yang kalau dipencet bunyi 'tiktok' tapi bukan jam?",
+                answer: "kalkulator yang rusak",
+                hints: [
+                    "Ini adalah alat elektronik.",
+                    "Sering digunakan untuk menghitung.",
+                    "Bunyi ini terjadi karena kerusakan."
+                ]
+            }
+        ];
+
+        // Variabel game
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let gameStarted = false;
+        let attemptsLeft = 3;
+        let hintsLeft = 3;
+        let currentCorrectAnswer = "";
+        let shuffledQuestions = [];
+        let timeLeft = 60; // Waktu awal 60 detik
+        let timerInterval = null;
+        
+        // Elemen DOM
+        const questionElement = document.getElementById('question');
+        const answerElement = document.getElementById('answer');
+        const startBtn = document.getElementById('startBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const scoreElement = document.getElementById('score');
+        const emojiElement = document.querySelector('.emoji');
+        const userAnswerInput = document.getElementById('userAnswer');
+        const feedbackElement = document.getElementById('feedback');
+        const attemptsElement = document.getElementById('attempts');
+        const hintsElement = document.getElementById('hints');
+        const timerElement = document.getElementById('timer');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        // Event listeners
+        startBtn.addEventListener('click', startGame);
+        submitBtn.addEventListener('click', checkAnswer);
+        hintBtn.addEventListener('click', showHint);
+        nextBtn.addEventListener('click', nextQuestion);
+        logoutBtn.addEventListener('click', handleLogout);
+        userAnswerInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+        
+        // Fungsi untuk handle logout
+        function handleLogout() {
+            Swal.fire({
+                title: 'Konfirmasi Logout',
+                text: 'Apakah Anda yakin ingin keluar dari permainan?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'Ya, Logout!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // User memilih logout
+                    Swal.fire({
+                        title: 'Logout Berhasil!',
+                        text: 'Terima kasih telah bermain!',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        // Redirect ke halaman start.html
+                        window.location.href = 'start.html';
+                    });
+                }
+                // Jika user memilih batal, tidak ada aksi yang dilakukan
+            });
+        }
+        
+        // Fungsi untuk mengacak array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Fungsi untuk memulai timer
+        function startTimer() {
+            clearInterval(timerInterval); // Hentikan timer sebelumnya jika ada
+            timeLeft = 60; // Reset waktu ke 60 detik
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    feedbackElement.textContent = `Waktu habis! Jawaban yang benar: ${shuffledQuestions[currentQuestionIndex].answer}`;
+                    feedbackElement.className = "feedback incorrect";
+                    answerElement.textContent = shuffledQuestions[currentQuestionIndex].answer;
+                    answerElement.style.display = 'block';
+                    emojiElement.textContent = "😅";
+                    submitBtn.classList.add('hidden');
+                    nextBtn.classList.remove('hidden');
+                    hintBtn.classList.add('hidden');
+                    userAnswerInput.disabled = true;
+                }
+            }, 1000);
+        }
+        
+        // Fungsi untuk update display timer
+        function updateTimerDisplay() {
+            timerElement.textContent = `Waktu: ${timeLeft} detik`;
+        }
+        
+        // Fungsi untuk memulai permainan
+        function startGame() {
+            gameStarted = true;
+            startBtn.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+            hintBtn.classList.add('hidden');
+            score = 0;
+            currentQuestionIndex = 0;
+            shuffledQuestions = shuffleArray([...questions]); // Acak pertanyaan
+            updateScore();
+            showQuestion();
+            emojiElement.textContent = "🤔";
+            userAnswerInput.disabled = false;
+            submitBtn.disabled = false;
+            userAnswerInput.focus();
+            startTimer();
+        }
+        
+        // Fungsi untuk menampilkan pertanyaan
+        function showQuestion() {
+            if (currentQuestionIndex < shuffledQuestions.length) {
+                questionElement.textContent = shuffledQuestions[currentQuestionIndex].question;
+                currentCorrectAnswer = shuffledQuestions[currentQuestionIndex].answer.toLowerCase().trim();
+                answerElement.textContent = '';
+                answerElement.style.display = 'none';
+                feedbackElement.textContent = '';
+                feedbackElement.className = 'feedback';
+                attemptsLeft = 3;
+                hintsLeft = 3;
+                updateAttemptsDisplay();
+                updateHintsDisplay();
+                userAnswerInput.value = '';
+                userAnswerInput.disabled = false; // Enable input for new question
+                emojiElement.textContent = "🤔";
+                submitBtn.disabled = false;
+                hintBtn.classList.remove('hidden');
+                hintBtn.disabled = false;
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+                userAnswerInput.focus();
+                startTimer();
+            } else {
+                // Game selesai
+                clearInterval(timerInterval);
+                questionElement.textContent = `Permainan selesai! Skor akhir kamu: ${score}/${shuffledQuestions.length}`;
+                submitBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                hintBtn.classList.add('hidden');
+                startBtn.textContent = 'Main Lagi';
+                startBtn.classList.remove('hidden');
+                answerElement.style.display = 'none';
+                feedbackElement.textContent = '';
+                hintsElement.textContent = '';
+                userAnswerInput.disabled = true;
+                timerElement.textContent = 'Waktu: -';
+                emojiElement.textContent = score === shuffledQuestions.length ? "🎉" : score >= shuffledQuestions.length/2 ? "😊" : "😅";
+            }
+        }
+        
+        // Fungsi untuk mengecek jawaban
+        function checkAnswer() {
+            const userAnswer = userAnswerInput.value.toLowerCase().trim();
+            
+            if (userAnswer === '') {
+                feedbackElement.textContent = "Silakan masukkan jawaban terlebih dahulu!";
+                feedbackElement.className = "feedback incorrect";
+                return;
+            }
+            
+            if (userAnswer === currentCorrectAnswer) {
+                // Jawaban benar
+                clearInterval(timerInterval);
+                score++;
+                updateScore();
+                feedbackElement.textContent = "Benar! Jawaban tepat sekali!";
+                feedbackElement.className = "feedback correct";
+                answerElement.textContent = `Jawaban: ${shuffledQuestions[currentQuestionIndex].answer}`;
+                answerElement.style.display = 'block';
+                emojiElement.textContent = "🎉";
+                submitBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+                hintBtn.classList.add('hidden');
+                userAnswerInput.disabled = true;
+            } else {
+                // Jawaban salah
+                attemptsLeft--;
+                updateAttemptsDisplay();
+                
+                if (attemptsLeft > 0) {
+                    feedbackElement.textContent = "Jawaban salah! Coba lagi...";
+                    feedbackElement.className = "feedback incorrect";
+                    userAnswerInput.value = '';
+                    userAnswerInput.focus();
+                    emojiElement.textContent = "😕";
+                    
+                    // Animasi shake
+                    questionElement.classList.add('wrong-answer');
+                    setTimeout(() => {
+                        questionElement.classList.remove('wrong-answer');
+                    }, 500);
+                } else {
+                    clearInterval(timerInterval);
+                    feedbackElement.textContent = `Yah, kesempatan habis! Jawaban yang benar: ${shuffledQuestions[currentQuestionIndex].answer}`;
+                    feedbackElement.className = "feedback incorrect";
+                    answerElement.textContent = shuffledQuestions[currentQuestionIndex].answer;
+                    answerElement.style.display = 'block';
+                    emojiElement.textContent = "😅";
+                    submitBtn.classList.add('hidden');
+                    nextBtn.classList.remove('hidden');
+                    hintBtn.classList.add('hidden');
+                    userAnswerInput.disabled = true;
+                }
+            }
+        }
+        
+        // Fungsi untuk menampilkan hint
+        function showHint() {
+            if (hintsLeft > 0) {
+                hintsLeft--;
+                timeLeft = Math.max(0, timeLeft - 3); // Kurangi waktu 3 detik, minimum 0
+                updateHintsDisplay();
+                updateTimerDisplay();
+                const hintIndex = 3 - hintsLeft - 1;
+                feedbackElement.textContent = `Hint: ${shuffledQuestions[currentQuestionIndex].hints[hintIndex]}`;
+                feedbackElement.className = "feedback";
+                emojiElement.textContent = "💡";
+                if (hintsLeft === 0) {
+                    hintBtn.disabled = true;
+                }
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    feedbackElement.textContent = `Waktu habis! Jawaban yang benar: ${shuffledQuestions[currentQuestionIndex].answer}`;
+                    feedbackElement.className = "feedback incorrect";
+                    answerElement.textContent = shuffledQuestions[currentQuestionIndex].answer;
+                    answerElement.style.display = 'block';
+                    emojiElement.textContent = "😅";
+                    submitBtn.classList.add('hidden');
+                    nextBtn.classList.remove('hidden');
+                    hintBtn.classList.add('hidden');
+                    userAnswerInput.disabled = true;
+                }
+            }
+        }
+        
+        // Fungsi untuk update display percobaan
+        function updateAttemptsDisplay() {
+            attemptsElement.textContent = `Kesempatan menjawab: ${attemptsLeft}`;
+        }
+        
+        // Fungsi untuk update display hint
+        function updateHintsDisplay() {
+            hintsElement.textContent = `Hint tersisa: ${hintsLeft}`;
+        }
+        
+        // Fungsi untuk pertanyaan berikutnya
+        function nextQuestion() {
+            clearInterval(timerInterval);
+            currentQuestionIndex++;
+            showQuestion();
+        }
+        
+        // Fungsi untuk update skor
+        function updateScore() {
+            scoreElement.textContent = `Skor: ${score}`;
+        }
+    </script>
+</body>
+</html>
